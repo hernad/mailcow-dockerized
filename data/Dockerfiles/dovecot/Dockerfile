@@ -32,7 +32,7 @@ RUN groupadd -g 5000 vmail \
   libcrypt-openssl-rsa-perl \
   libcrypt-ssleay-perl \
   libdata-uniqid-perl \
-  libdbd-mysql-perl \
+  libdbd-pg-perl \
   libdbi-perl \
   libdigest-hmac-perl \
   libdist-checkconflicts-perl \
@@ -73,10 +73,12 @@ RUN groupadd -g 5000 vmail \
   libunicode-string-perl \
   liburi-perl \
   libwww-perl \
-  lua-sql-mysql \
+  lua-sql-postgres \
   lua-socket \
-  mariadb-client \
+  postgresql-client \
   procps \
+  libpq-dev \
+  #gcc \
   python3-pip \
   redis-server \
   supervisor \
@@ -97,12 +99,12 @@ RUN groupadd -g 5000 vmail \
   dovecot-sieve \
   dovecot-lmtpd \
   dovecot-ldap \
-  dovecot-mysql \
+  dovecot-pgsql \
   dovecot-core \
   dovecot-pop3d \
   dovecot-imapd \
   dovecot-solr \
-  && pip3 install mysql-connector-python html2text jinja2 redis \
+  && pip3 install psycopg2-binary html2text jinja2 redis \
   && apt-get autoremove --purge -y \
   && apt-get autoclean \
   && rm -rf /var/lib/apt/lists/* \

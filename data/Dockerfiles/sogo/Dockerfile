@@ -14,6 +14,7 @@ RUN echo "Building from repository $SOGO_DEBIAN_REPOSITORY" \
   gettext \
   gnupg \
   mariadb-client \
+  postgresql-client \
   rsync \
   supervisor \
   syslog-ng \

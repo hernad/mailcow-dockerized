@@ -23,7 +23,7 @@ RUN groupadd -g 102 postfix \
   mariadb-client \
 	perl \
 	postfix \
-	postfix-mysql \
+	postfix-pgsql \
 	postfix-pcre \
 	redis-tools \
 	sasl2-bin \

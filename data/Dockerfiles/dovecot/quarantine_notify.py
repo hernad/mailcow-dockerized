@@ -3,7 +3,7 @@
 import smtplib
 import os
 import sys
-import mysql.connector
+import psycopg2
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
@@ -47,10 +47,12 @@ try:
   if max_score == "":
     max_score = 9999.0
 
-  def query_mysql(query, headers = True, update = False):
+  def query_postgres(query, headers = True, update = False):
     while True:
       try:
-        cnx = mysql.connector.connect(unix_socket = '/var/run/mysqld/mysqld.sock', user=os.environ.get('DBUSER'), passwd=os.environ.get('DBPASS'), database=os.environ.get('DBNAME'), charset="utf8mb4", collation="utf8mb4_general_ci")
+        #import psycopg2
+        #conn = psycopg2.connect(database="postgres", user="postgres", password="datasoft123", host="127.0.0.1", port="5432")
+        cnx = psycopg2.connect(host=os.environ.get('DBHOST'), user=os.environ.get('DBUSER'), passwd=os.environ.get('DBPASS'), database=os.environ.get('DBNAME'))
       except Exception as ex:
         print('%s - trying again...'  % (ex))
         time.sleep(3)
@@ -76,7 +78,7 @@ try:
 
   def notify_rcpt(rcpt, msg_count, quarantine_acl, category):
     if category == "add_header": category = "add header"
-    meta_query = query_mysql('SELECT SHA2(CONCAT(id, qid), 256) AS qhash, id, subject, score, sender, created, action FROM quarantine WHERE notified = 0 AND rcpt = "%s" AND score < %f AND (action = "%s" OR "all" = "%s")' % (rcpt, max_score, category, category))
+    meta_query = query_postgres('SELECT SHA2(CONCAT(id, qid), 256) AS qhash, id, subject, score, sender, created, action FROM quarantine WHERE notified = 0 AND rcpt = "%s" AND score < %f AND (action = "%s" OR "all" = "%s")' % (rcpt, max_score, category, category))
     print("%s: %d of %d messages qualify for notification" % (rcpt, len(meta_query), msg_count))
     if len(meta_query) == 0:
       return
@@ -125,7 +127,7 @@ try:
             server.sendmail(msg['From'], [str(redirect)] + [str(bcc)], text)
         server.quit()
         for res in meta_query:
-         query_mysql('UPDATE quarantine SET notified = 1 WHERE id = "%d"' % (res['id']), update = True)
+         query_postgres('UPDATE quarantine SET notified = 1 WHERE id = "%d"' % (res['id']), update = True)
         r.hset('Q_LAST_NOTIFIED', record['rcpt'], time_now)
         break
       except Exception as ex:
@@ -133,7 +135,7 @@ try:
         print('%s'  % (ex))
         time.sleep(3)
 
-  records = query_mysql('SELECT IFNULL(user_acl.quarantine, 0) AS quarantine_acl, count(id) AS counter, rcpt FROM quarantine LEFT OUTER JOIN user_acl ON user_acl.username = rcpt WHERE notified = 0 AND score < %f AND rcpt in (SELECT username FROM mailbox) GROUP BY rcpt' % (max_score))
+  records = query_postgres('SELECT IFNULL(user_acl.quarantine, 0) AS quarantine_acl, count(id) AS counter, rcpt FROM quarantine LEFT OUTER JOIN user_acl ON user_acl.username = rcpt WHERE notified = 0 AND score < %f AND rcpt in (SELECT username FROM mailbox) GROUP BY rcpt' % (max_score))
 
   for record in records:
     attrs = ''
@@ -151,7 +153,7 @@ try:
     except Exception as ex:
       print('Could not determine last notification for %s, assuming never' % (record['rcpt']))
       last_notification = 0
-    attrs_json = query_mysql('SELECT attributes FROM mailbox WHERE username = "%s"' % (record['rcpt']))
+    attrs_json = query_postgres('SELECT attributes FROM mailbox WHERE username = "%s"' % (record['rcpt']))
     attrs = attrs_json[0]['attributes']
     if isinstance(attrs, str):
       # if attr is str then just load it

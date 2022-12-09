@@ -36,7 +36,10 @@ sub qqw($) {
 }
 
 $run_dir="/tmp";
-$dsn = 'DBI:mysql:database=' . $ENV{'DBNAME'} . ';mysql_socket=/var/run/mysqld/mysqld.sock';
+#DBI:Pg:dbname=$database;host=127.0.0.1;port=5432
+$dsn = 'DBI:Pg:database=' . $ENV{'DBNAME'} . ';host=' . $ENV{'DBHOST'} . ';port=5432';
+
+
 $lock_file = $run_dir . "/imapsync_busy";
 $lockmgr = LockFile::Simple->make(-autoclean => 1, -max => 1);
 $lockmgr->lock($lock_file) || die "can't lock ${lock_file}";
